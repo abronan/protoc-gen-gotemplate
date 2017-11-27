@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	goproto "github.com/golang/protobuf/proto"
+	proto_go "github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	ggdescriptor "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor"
 	"github.com/huandu/xstrings"
@@ -372,7 +372,7 @@ func namespacedFlowType(s string) string {
 
 func httpPath(m *descriptor.MethodDescriptorProto) string {
 
-	ext, err := goproto.GetExtension(m.Options, options.E_Http)
+	ext, err := proto_go.GetExtension(m.Options, options.E_Http)
 	if err != nil {
 		return err.Error()
 	}
@@ -401,7 +401,7 @@ func httpPath(m *descriptor.MethodDescriptorProto) string {
 
 func httpVerb(m *descriptor.MethodDescriptorProto) string {
 
-	ext, err := goproto.GetExtension(m.Options, options.E_Http)
+	ext, err := proto_go.GetExtension(m.Options, options.E_Http)
 	if err != nil {
 		return err.Error()
 	}
@@ -430,7 +430,7 @@ func httpVerb(m *descriptor.MethodDescriptorProto) string {
 
 func httpBody(m *descriptor.MethodDescriptorProto) string {
 
-	ext, err := goproto.GetExtension(m.Options, options.E_Http)
+	ext, err := proto_go.GetExtension(m.Options, options.E_Http)
 	if err != nil {
 		return err.Error()
 	}

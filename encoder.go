@@ -9,38 +9,38 @@ import (
 	"text/template"
 	"time"
 
-	gogoplugin "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
-	godesc "github.com/golang/protobuf/protoc-gen-go/descriptor"
+	plugin_gogo "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
+	desc_go "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-	pgghelpers "github.com/abronan/protoc-gen-gotemplate/helpers"
+	pgghelpers "github.com/moul/protoc-gen-gotemplate/helpers"
 )
 
 type GenericTemplateBasedEncoder struct {
 	templateDir    string
-	service        *godesc.ServiceDescriptorProto
-	file           *godesc.FileDescriptorProto
-	enum           []*godesc.EnumDescriptorProto
+	service        *desc_go.ServiceDescriptorProto
+	file           *desc_go.FileDescriptorProto
+	enum           []*desc_go.EnumDescriptorProto
 	debug          bool
 	destinationDir string
 }
 
 type Ast struct {
-	BuildDate      time.Time                      `json:"build-date"`
-	BuildHostname  string                         `json:"build-hostname"`
-	BuildUser      string                         `json:"build-user"`
-	GoPWD          string                         `json:"go-pwd,omitempty"`
-	PWD            string                         `json:"pwd"`
-	Debug          bool                           `json:"debug"`
-	DestinationDir string                         `json:"destination-dir"`
-	File           *godesc.FileDescriptorProto    `json:"file"`
-	RawFilename    string                         `json:"raw-filename"`
-	Filename       string                         `json:"filename"`
-	TemplateDir    string                         `json:"template-dir"`
-	Service        *godesc.ServiceDescriptorProto `json:"service"`
-	Enum           []*godesc.EnumDescriptorProto  `json:"enum"`
+	BuildDate      time.Time                       `json:"build-date"`
+	BuildHostname  string                          `json:"build-hostname"`
+	BuildUser      string                          `json:"build-user"`
+	GoPWD          string                          `json:"go-pwd,omitempty"`
+	PWD            string                          `json:"pwd"`
+	Debug          bool                            `json:"debug"`
+	DestinationDir string                          `json:"destination-dir"`
+	File           *desc_go.FileDescriptorProto    `json:"file"`
+	RawFilename    string                          `json:"raw-filename"`
+	Filename       string                          `json:"filename"`
+	TemplateDir    string                          `json:"template-dir"`
+	Service        *desc_go.ServiceDescriptorProto `json:"service"`
+	Enum           []*desc_go.EnumDescriptorProto  `json:"enum"`
 }
 
-func NewGenericServiceTemplateBasedEncoder(templateDir string, service *godesc.ServiceDescriptorProto, file *godesc.FileDescriptorProto, debug bool, destinationDir string) (e *GenericTemplateBasedEncoder) {
+func NewGenericServiceTemplateBasedEncoder(templateDir string, service *desc_go.ServiceDescriptorProto, file *desc_go.FileDescriptorProto, debug bool, destinationDir string) (e *GenericTemplateBasedEncoder) {
 	e = &GenericTemplateBasedEncoder{
 		service:        service,
 		file:           file,
@@ -56,7 +56,7 @@ func NewGenericServiceTemplateBasedEncoder(templateDir string, service *godesc.S
 	return
 }
 
-func NewGenericTemplateBasedEncoder(templateDir string, file *godesc.FileDescriptorProto, debug bool, destinationDir string) (e *GenericTemplateBasedEncoder) {
+func NewGenericTemplateBasedEncoder(templateDir string, file *desc_go.FileDescriptorProto, debug bool, destinationDir string) (e *GenericTemplateBasedEncoder) {
 	e = &GenericTemplateBasedEncoder{
 		service:        nil,
 		file:           file,
@@ -158,16 +158,16 @@ func (e *GenericTemplateBasedEncoder) buildContent(templateFilename string) (str
 	return buffer.String(), ast.Filename, nil
 }
 
-func (e *GenericTemplateBasedEncoder) Files() []*gogoplugin.CodeGeneratorResponse_File {
+func (e *GenericTemplateBasedEncoder) Files() []*plugin_gogo.CodeGeneratorResponse_File {
 	templates, err := e.templates()
 	if err != nil {
 		log.Fatalf("cannot get templates from %q: %v", e.templateDir, err)
 	}
 
 	length := len(templates)
-	files := make([]*gogoplugin.CodeGeneratorResponse_File, 0, length)
+	files := make([]*plugin_gogo.CodeGeneratorResponse_File, 0, length)
 	errChan := make(chan error, length)
-	resultChan := make(chan *gogoplugin.CodeGeneratorResponse_File, length)
+	resultChan := make(chan *plugin_gogo.CodeGeneratorResponse_File, length)
 	for _, templateFilename := range templates {
 		go func(tmpl string) {
 			content, translatedFilename, err := e.buildContent(tmpl)
@@ -177,7 +177,7 @@ func (e *GenericTemplateBasedEncoder) Files() []*gogoplugin.CodeGeneratorRespons
 			}
 			filename := translatedFilename[:len(translatedFilename)-len(".tmpl")]
 
-			resultChan <- &gogoplugin.CodeGeneratorResponse_File{
+			resultChan <- &plugin_gogo.CodeGeneratorResponse_File{
 				Content: &content,
 				Name:    &filename,
 			}

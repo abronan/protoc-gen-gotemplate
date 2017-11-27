@@ -9,12 +9,12 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
 	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
-	gogoplugin "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
+	plugin_gogo "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 	"github.com/gogo/protobuf/vanity"
 	"github.com/gogo/protobuf/vanity/command"
 	ggdescriptor "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor"
 
-	pgghelpers "github.com/abronan/protoc-gen-gotemplate/helpers"
+	pgghelpers "github.com/moul/protoc-gen-gotemplate/helpers"
 )
 
 var (
@@ -107,8 +107,8 @@ func main() {
 		}
 	}
 
-	tmplMap := make(map[string]*gogoplugin.CodeGeneratorResponse_File)
-	concatOrAppend := func(file *gogoplugin.CodeGeneratorResponse_File) {
+	tmplMap := make(map[string]*plugin_gogo.CodeGeneratorResponse_File)
+	concatOrAppend := func(file *plugin_gogo.CodeGeneratorResponse_File) {
 		if val, ok := tmplMap[file.GetName()]; ok {
 			*val.Content += file.GetContent()
 		} else {
@@ -120,14 +120,14 @@ func main() {
 	if singlePackageMode {
 		registry = ggdescriptor.NewRegistry()
 		pgghelpers.SetRegistry(registry)
-		goReq := pgghelpers.TransformCodeGeneratorRequestGo(g.Request)
+		goReq := pgghelpers.ConvertGoGoCodeGeneratorRequest(g.Request)
 		if err := registry.Load(goReq); err != nil {
 			g.Error(err, "registry: failed to load the request")
 		}
 	}
 
 	// Convert gogo file descriptor to golang descriptor
-	gofiles := pgghelpers.TransformFileDescriptorGo(files)
+	gofiles := pgghelpers.ConvertGoGoFileDescriptor(files)
 
 	// Generate the encoders
 	for _, file := range gofiles {
