@@ -12,7 +12,7 @@ import (
 	plugin_gogo "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
 	desc_go "github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-	pgghelpers "github.com/moul/protoc-gen-gotemplate/helpers"
+	pgghelpers "github.com/abronan/protoc-gen-gotemplate/helpers"
 )
 
 type GenericTemplateBasedEncoder struct {

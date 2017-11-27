@@ -14,7 +14,7 @@ import (
 	"github.com/gogo/protobuf/vanity/command"
 	ggdescriptor "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor"
 
-	pgghelpers "github.com/moul/protoc-gen-gotemplate/helpers"
+	pgghelpers "github.com/abronan/protoc-gen-gotemplate/helpers"
 )
 
 var (
@@ -155,5 +155,10 @@ func main() {
 
 	// Generate the protobufs
 	resp := command.Generate(g.Request)
+	if resp.Error != nil {
+		log.Println(resp.Error)
+	}
+	log.Println("after generate")
 	command.Write(resp)
+	log.Println("program ends")
 }
