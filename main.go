@@ -6,12 +6,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/protoc-gen-go/generator"
-	"github.com/golang/protobuf/protoc-gen-go/plugin"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gogo/protobuf/protoc-gen-gogo/descriptor"
+	"github.com/gogo/protobuf/protoc-gen-gogo/generator"
+	gogoplugin "github.com/gogo/protobuf/protoc-gen-gogo/plugin"
+	"github.com/gogo/protobuf/vanity"
+	"github.com/gogo/protobuf/vanity/command"
 	ggdescriptor "github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor"
 
-	pgghelpers "github.com/moul/protoc-gen-gotemplate/helpers"
+	pgghelpers "github.com/abronan/protoc-gen-gotemplate/helpers"
 )
 
 var (
@@ -34,7 +37,20 @@ func main() {
 		g.Fail("no files to generate")
 	}
 
-	g.CommandLineParameters(g.Request.GetParameter())
+	files := g.Request.GetProtoFile()
+
+	for _, opt := range []func(*descriptor.FileDescriptorProto){
+		// We do not turn off getters for the generator.
+		// vanity.TurnOffGoGettersAll,
+		vanity.TurnOffGoStringerAll,
+		vanity.TurnOnMarshalerAll,
+		vanity.TurnOnStringerAll,
+		vanity.TurnOnUnmarshalerAll,
+		vanity.TurnOnSizerAll,
+		CustomNameID,
+	} {
+		vanity.ForEachFile(files, opt)
+	}
 
 	// Parse parameters
 	var (
@@ -91,8 +107,8 @@ func main() {
 		}
 	}
 
-	tmplMap := make(map[string]*plugin_go.CodeGeneratorResponse_File)
-	concatOrAppend := func(file *plugin_go.CodeGeneratorResponse_File) {
+	tmplMap := make(map[string]*gogoplugin.CodeGeneratorResponse_File)
+	concatOrAppend := func(file *gogoplugin.CodeGeneratorResponse_File) {
 		if val, ok := tmplMap[file.GetName()]; ok {
 			*val.Content += file.GetContent()
 		} else {
@@ -104,13 +120,17 @@ func main() {
 	if singlePackageMode {
 		registry = ggdescriptor.NewRegistry()
 		pgghelpers.SetRegistry(registry)
-		if err := registry.Load(g.Request); err != nil {
+		goReq := pgghelpers.TransformCodeGeneratorRequestGo(g.Request)
+		if err := registry.Load(goReq); err != nil {
 			g.Error(err, "registry: failed to load the request")
 		}
 	}
 
+	// Convert gogo file descriptor to golang descriptor
+	gofiles := pgghelpers.TransformFileDescriptorGo(files)
+
 	// Generate the encoders
-	for _, file := range g.Request.GetProtoFile() {
+	for _, file := range gofiles {
 		if all {
 			if singlePackageMode {
 				if _, err := registry.LookupFile(file.GetName()); err != nil {
@@ -134,15 +154,6 @@ func main() {
 	}
 
 	// Generate the protobufs
-	g.GenerateAllFiles()
-
-	data, err = proto.Marshal(g.Response)
-	if err != nil {
-		g.Error(err, "failed to marshal output proto")
-	}
-
-	_, err = os.Stdout.Write(data)
-	if err != nil {
-		g.Error(err, "failed to write output proto")
-	}
+	resp := command.Generate(g.Request)
+	command.Write(resp)
 }
